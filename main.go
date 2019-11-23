@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"time"
 
@@ -12,9 +13,7 @@ const timeFormat = "2006-01-02"
 
 func main() {
 
-	token := api.GetAuthkey()
-
-	d := "2019-11-17"
+	d := "2019-10-15"
 
 	endDate, err := time.Parse(timeFormat, d)
 	if err != nil {
@@ -23,11 +22,49 @@ func main() {
 
 	startDate := endDate.AddDate(0, 0, -14)
 
-	transactions := api.GetTransactions(startDate.Format(timeFormat), endDate.Format(timeFormat), token)
+	sdString := startDate.Format(timeFormat)
+	edString := endDate.Format(timeFormat)
 
-	var transactionsMap map[string]api.Transaction
+	transactions := api.GetTransactions(sdString, edString, token)
+	purchases := api.GetPurchases(sdString, edString, token)
+
+	purchasesMap := make(map[string]string)
+
+	for _, v := range purchases {
+		purchasesMap[v.Payments[0].UUID] = v.UserDisplayName
+	}
+
+	amountSold := make(map[string]int)
+
+	numPayouts := 0
 
 	for _, v := range transactions {
-		transactionsMap[v.UUID] = v
+
+		if v.Type == "PAYOUT" {
+			numPayouts++
+		}
+
+		if numPayouts == 0 {
+			continue
+		}
+
+		if numPayouts >= 2 {
+			break
+		}
+
+		seller := purchasesMap[v.UUID]
+		if seller == "" {
+			seller = "Total"
+		}
+		amountSold[seller] = amountSold[seller] + v.Amount
+
 	}
+
+	for key, value := range amountSold {
+
+		amount := float64(value) / 100
+
+		fmt.Printf("%s : %.2f kr \n", key, amount)
+	}
+
 }
