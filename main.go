@@ -2,16 +2,32 @@ package main
 
 import (
 	"log"
+	"time"
 
-	"github.com/joho/godotenv"
+	_ "github.com/joho/godotenv/autoload"
+	"github.com/swexbe/zettleIT/api"
 )
+
+const timeFormat = "2006-01-02"
 
 func main() {
 
-	err := godotenv.Load()
+	token := api.GetAuthkey()
+
+	d := "2019-11-17"
+
+	endDate, err := time.Parse(timeFormat, d)
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		log.Fatalln(err)
 	}
 
-	//log.Println(string(body))
+	startDate := endDate.AddDate(0, 0, -14)
+
+	transactions := api.GetTransactions(startDate.Format(timeFormat), endDate.Format(timeFormat), token)
+
+	var transactionsMap map[string]api.Transaction
+
+	for _, v := range transactions {
+		transactionsMap[v.UUID] = v
+	}
 }
