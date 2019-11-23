@@ -1,8 +1,11 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"log"
+	"os"
+	"strings"
 	"time"
 
 	_ "github.com/joho/godotenv/autoload"
@@ -13,9 +16,19 @@ const timeFormat = "2006-01-02"
 
 func main() {
 
-	d := "2019-10-15"
+	username := os.Getenv("USERNAME")
+	password := os.Getenv("PASSWORD")
 
-	endDate, err := time.Parse(timeFormat, d)
+	token := api.GetAuthkey(username, password)
+
+	reader := bufio.NewReader(os.Stdin)
+
+	fmt.Print("Enter Payout Date: ")
+	date, _ := reader.ReadString('\n')
+
+	date = strings.TrimSuffix(date, "\n")
+
+	endDate, err := time.Parse(timeFormat, date)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -38,10 +51,13 @@ func main() {
 
 	numPayouts := 0
 
+	fmt.Print("\nDISTRIBUTION OF PAYMENTS: \n")
+
 	for _, v := range transactions {
 
 		if v.Type == "PAYOUT" {
 			numPayouts++
+
 		}
 
 		if numPayouts == 0 {
