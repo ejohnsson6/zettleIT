@@ -1,4 +1,4 @@
-package apis
+package api
 
 import (
 	"io/ioutil"
@@ -13,7 +13,8 @@ type secrets struct {
 	clientID     string `json:Client_ID`
 }
 
-func getAuthkey(username string, password string) string {
+// GetAuthkey gets a new auth key from izettle.
+func GetAuthkey(username string, password string) string {
 	url := "https://oauth.izettle.com/token"
 
 	secrets := secrets{}
@@ -34,4 +35,6 @@ func getAuthkey(username string, password string) string {
 	}
 
 	log.Println(string(body))
+
+	return "fuckoff"
 }

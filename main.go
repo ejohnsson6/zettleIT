@@ -4,9 +4,13 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+
+	"github.com/swexbe/zettleIT/api"
 )
 
 func main() {
+
+	api.GetAuthkey()
 
 	url := "https://purchase.izettle.com/purchases/v2?limit=10&&descending=true"
 
