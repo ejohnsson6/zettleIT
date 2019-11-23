@@ -1,6 +1,6 @@
 # zettleit
 
-To run create a .env file in the program directory with the following contents:
+To run this program you need to setup the following environment variables, this can either be done by exporting them or creating a .env file in the project directory.
 
 ```
 CLIENT_SECRET=<IZettle API Client Secret>
