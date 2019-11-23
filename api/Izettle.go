@@ -1,40 +1,49 @@
 package api
 
 import (
-	"io/ioutil"
+	"encoding/json"
 	"log"
 	"net/http"
-
-	"github.com/tkanos/gonfig"
+	"net/url"
+	"os"
 )
 
-type secrets struct {
-	clientSecret string `json:Client_Secret`
-	clientID     string `json:Client_ID`
+type tokenResponse struct {
+	AccessToken string `json:"access_token"`
 }
 
 // GetAuthkey gets a new auth key from izettle.
 func GetAuthkey(username string, password string) string {
-	url := "https://oauth.izettle.com/token"
+	tokenURL := "https://oauth.izettle.com/token"
 
-	secrets := secrets{}
-	err := gonfig.GetConf("./apis/secrets.json", &secrets)
+	clientSecret := os.Getenv("CLIENT_SECRET")
+	clientID := os.Getenv("CLIENT_ID")
 
-	client := &http.Client{}
-	req, _ := http.NewRequest("POST", url, nil)
-	req.Header.Add("grant_type", "password")
-	req.Header.Add("client_id", secrets.clientID)
-	req.Header.Add("client_secret", secrets.clientSecret)
-	req.Header.Add("username", username)
-	req.Header.Add("password", password)
-	resp, _ := client.Do(req)
+	log.Println(clientID)
+	log.Println(clientSecret)
 
-	body, err := ioutil.ReadAll(resp.Body)
+	formData := url.Values{
+		"grant_type":    {"password"},
+		"client_id":     {clientID},
+		"client_secret": {clientSecret},
+		"username":      {username},
+		"password":      {password},
+	}
+
+	resp, err := http.PostForm(tokenURL, formData)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	log.Println(string(body))
+	if resp.StatusCode != 200 {
+		var error map[string]interface{}
+		json.NewDecoder(resp.Body).Decode(&error)
+		log.Fatalln(error)
+	}
 
-	return "fuckoff"
+	var result tokenResponse
+
+	json.NewDecoder(resp.Body).Decode(&result)
+
+	return result.AccessToken
 }
