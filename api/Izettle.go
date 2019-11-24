@@ -77,7 +77,7 @@ func GetTransactions(startDate string, endDate string, auth string) []Transactio
 
 	resp := izettleGetRequest(startDate, endDate, auth, transactionURL)
 
-	var result TransactionData
+	var result transactionData
 	json.NewDecoder(resp.Body).Decode(&result)
 
 	return result.Data

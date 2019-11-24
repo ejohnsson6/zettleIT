@@ -13,7 +13,7 @@ type Transaction struct {
 }
 
 // TransactionData is a wrapper for Transactions
-type TransactionData struct {
+type transactionData struct {
 	Data []Transaction `json:"data"`
 }
 
