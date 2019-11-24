@@ -8,3 +8,5 @@ CLIENT_ID=<IZettle API Client ID>
 USERNAME=<IZettle Admin Account Username>
 PASSWORD=<IZettle Admin Account Password>
 ```
+
+Dates are written in the **YYYY-MM-dd** format.
