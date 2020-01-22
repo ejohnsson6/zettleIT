@@ -19,7 +19,15 @@ const timeFormat = "2006-01-02"
 func main() {
 
 	verbose := flag.Bool("v", false, "")
+	dateP := flag.String("d", "", "")
 	flag.Parse()
+
+	date := *dateP
+
+	if *verbose {
+		fmt.Printf("***********VERBOSE MODE***********\n")
+		fmt.Printf("Date input is: %s\n", date)
+	}
 
 	username := os.Getenv("USERNAME")
 	password := os.Getenv("PASSWORD")
@@ -28,10 +36,13 @@ func main() {
 
 	reader := bufio.NewReader(os.Stdin)
 
-	fmt.Print("Enter Payout Date: ")
-	date, _ := reader.ReadString('\n')
+	if date == "" {
+		fmt.Print("Enter Payout Date: ")
+		date, _ := reader.ReadString('\n')
 
-	date = strings.TrimSuffix(date, "\n")
+		date = strings.TrimSuffix(date, "\n")
+
+	}
 
 	endDate, err := time.Parse(timeFormat, date)
 
