@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"flag"
+
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/swexbe/zettleIT/api"
 )
@@ -15,6 +17,9 @@ import (
 const timeFormat = "2006-01-02"
 
 func main() {
+
+	verbose := flag.Bool("v", false, "")
+	flag.Parse()
 
 	username := os.Getenv("USERNAME")
 	password := os.Getenv("PASSWORD")
@@ -29,6 +34,7 @@ func main() {
 	date = strings.TrimSuffix(date, "\n")
 
 	endDate, err := time.Parse(timeFormat, date)
+
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -38,9 +44,16 @@ func main() {
 	sdString := startDate.Format(timeFormat)
 	edString := endDate.Format(timeFormat)
 
+	if *verbose {
+		fmt.Printf("StartDate: %s EndDate: %s\n", sdString, edString)
+	}
+
 	transactions := api.GetTransactions(sdString, edString, token)
 	purchases := api.GetPurchases(sdString, edString, token)
 
+	if *verbose {
+		fmt.Printf("Number of transaction %d \nNumber of purchases %d", len(transactions), len(purchases))
+	}
 	purchasesMap := make(map[string]string)
 
 	for _, v := range purchases {
@@ -57,7 +70,6 @@ func main() {
 
 		if v.Type == "PAYOUT" {
 			numPayouts++
-
 		}
 
 		if numPayouts == 0 {

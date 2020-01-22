@@ -13,7 +13,7 @@ import (
 
 const tokenURL = "https://oauth.izettle.com/token"
 const transactionURL = "https://finance.izettle.com/organizations/us/accounts/liquid/transactions?start=%[1]s&end=%[2]s"
-const purchaseURL = "https://purchase.izettle.com/purchases/v2?limit=100&&startDate=%[1]s&endDate=%[2]s&descending=true"
+const purchaseURL = "https://purchase.izettle.com/purchases/v2?startDate=%[1]s&endDate=%[2]s&descending=true"
 
 // Interval of days to get data from izettle, depends on how often payouts are made.
 const dateInterval = 14
