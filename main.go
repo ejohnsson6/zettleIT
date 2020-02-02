@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -16,38 +17,25 @@ import (
 
 const timeFormat = "2006-01-02"
 
-func main() {
-
-	verbose := flag.Bool("v", false, "")
-	dateP := flag.String("d", "", "")
-	flag.Parse()
-
-	date := *dateP
-
-	if *verbose {
-		fmt.Printf("***********VERBOSE MODE***********\n")
-		fmt.Printf("Date input is: %s\n", date)
-	}
-
-	username := os.Getenv("USERNAME")
-	password := os.Getenv("PASSWORD")
-
-	token := api.GetAuthkey(username, password)
-
+// IO
+func getDateInput() (string, error) {
 	reader := bufio.NewReader(os.Stdin)
+	fmt.Print("Enter Payout Date: ")
+	date, err := reader.ReadString('\n')
 
-	if date == "" {
-		fmt.Print("Enter Payout Date: ")
-		date, _ := reader.ReadString('\n')
-
-		date = strings.TrimSuffix(date, "\n")
-
+	if err != nil {
+		return "", errors.New("Unable to get input")
 	}
+
+	return strings.TrimSuffix(date, "\n"), nil
+}
+
+func getDateString(date string) (string, string, error) {
 
 	endDate, err := time.Parse(timeFormat, date)
 
 	if err != nil {
-		log.Fatalln(err)
+		return "", "", fmt.Errorf("Invalid Date: %s", date)
 	}
 
 	startDate := endDate.AddDate(0, 0, -14)
@@ -55,27 +43,38 @@ func main() {
 	sdString := startDate.Format(timeFormat)
 	edString := endDate.Format(timeFormat)
 
-	if *verbose {
-		fmt.Printf("StartDate: %s EndDate: %s\n", sdString, edString)
-	}
+	return sdString, edString, nil
 
-	transactions := api.GetTransactions(sdString, edString, token)
-	purchases := api.GetPurchases(sdString, edString, token)
+}
 
-	if *verbose {
-		fmt.Printf("Number of transaction %d \nNumber of purchases %d", len(transactions), len(purchases))
+func handleFatalErr(err error) {
+	if err != nil {
+		log.Fatalln(err)
 	}
+}
+
+// mapUUIDToSeller maps the
+func mapUUIDToSeller(purchases []api.Purchase, verbose bool) map[string]string {
+
 	purchasesMap := make(map[string]string)
 
 	for _, v := range purchases {
+		if verbose {
+			fmt.Printf("Purchase UUID: %s mapped to seller: %s\n", v.Payments[0].UUID, v.UserDisplayName)
+		}
 		purchasesMap[v.Payments[0].UUID] = v.UserDisplayName
 	}
+
+	return purchasesMap
+
+}
+
+func countTransactions(transactions []api.Transaction, purchasesMap map[string]string, verbose bool) (map[string]int, int) {
 
 	amountSold := make(map[string]int)
 
 	numPayouts := 0
-
-	fmt.Print("\nDISTRIBUTION OF PAYMENTS: \n")
+	total := 0
 
 	for _, v := range transactions {
 
@@ -93,11 +92,23 @@ func main() {
 
 		seller := purchasesMap[v.UUID]
 		if seller == "" {
-			seller = "Total"
+			total += v.Amount
+			continue
 		}
-		amountSold[seller] = amountSold[seller] + v.Amount
+		if verbose {
+			fmt.Printf("Seller %s sold item for %d öre\n", seller, v.Amount)
+		}
+		amountSold[seller] += v.Amount
 
 	}
+
+	return amountSold, -total
+}
+
+func printDistribution(amountSold map[string]int, total int) {
+	fmt.Print("\nDISTRIBUTION OF PAYMENTS: \n")
+
+	fmt.Printf("Total : %.2f kr \n", float64(total)/100)
 
 	for key, value := range amountSold {
 
@@ -105,5 +116,52 @@ func main() {
 
 		fmt.Printf("%s : %.2f kr \n", key, amount)
 	}
+}
 
+func main() {
+
+	verbose := flag.Bool("v", false, "")
+	dateP := flag.String("d", "", "")
+	flag.Parse()
+
+	if *verbose {
+		fmt.Printf("***********VERBOSE MODE***********\n")
+		fmt.Printf("Date input is: %s\n", *dateP)
+	}
+
+	username := os.Getenv("USERNAME")
+	password := os.Getenv("PASSWORD")
+
+	token, err := api.GetAuthkey(username, password)
+
+	var date string
+
+	if *dateP != "" {
+		date = *dateP
+	} else {
+		var err error
+		date, err = getDateInput()
+		handleFatalErr(err)
+	}
+
+	startDate, endDate, err := getDateString(date)
+	handleFatalErr(err)
+
+	if *verbose {
+		fmt.Printf("StartDate: %s EndDate: %s\n", startDate, endDate)
+	}
+
+	transactions, err := api.GetTransactions(startDate, endDate, token)
+	handleFatalErr(err)
+	purchases, err := api.GetPurchases(startDate, endDate, token)
+	handleFatalErr(err)
+
+	if *verbose {
+		fmt.Printf("Number of transaction %d \nNumber of purchases %d\n", len(transactions), len(purchases))
+	}
+
+	purchasesMap := mapUUIDToSeller(purchases, *verbose)
+	amountSold, total := countTransactions(transactions, purchasesMap, *verbose)
+
+	printDistribution(amountSold, total)
 }

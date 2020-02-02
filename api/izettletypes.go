@@ -12,7 +12,6 @@ type Transaction struct {
 	UUID      string `json:"originatingTransactionUuid"`
 }
 
-// TransactionData is a wrapper for Transactions
 type transactionData struct {
 	Data []Transaction `json:"data"`
 }
@@ -21,7 +20,7 @@ type payment struct {
 	UUID string `json:"uuid"`
 }
 
-// A Purchase is a fuck you
+// A Purchase represents an izettle purchase
 type Purchase struct {
 	UserDisplayName string    `json:"userDisplayName"`
 	Payments        []payment `json:"payments"`
