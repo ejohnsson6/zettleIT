@@ -10,3 +10,8 @@ PASSWORD=<IZettle Admin Account Password>
 ```
 
 Dates are written in the **YYYY-MM-dd** format.
+
+
+Input Parameters:
+* -v Verbose mode
+* -d [date] specify payout date
